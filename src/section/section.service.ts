@@ -7,40 +7,59 @@ export class SectionService {
 
   // Get list of all tables (sections)
   async getDataSources(): Promise<string[]> {
-    const result = await this.dataSource.query(`
-      SELECT table_name 
-      FROM information_schema.tables 
-      WHERE table_schema = 'public'
-    `);
-    console.log(result);
+    try {
+      const result = await this.dataSource.query(`
+        SELECT table_name 
+        FROM information_schema.tables 
+        WHERE table_schema = 'public'
+      `);
+      return result.map((row) => row.table_name);
+    } catch (error) {
+      console.error(error);
 
-    return result.map((row) => row.table_name);
+      throw new Error('Failed to fetch data sources');
+    }
   }
 
   // Get list of all columns (sub-sections) for a specific table (section)
   async getSectionColumns(sectionName: string): Promise<string[]> {
-    const result = await this.dataSource.query(`
-    SELECT column_name
-    FROM information_schema.columns
-    WHERE table_name = '${sectionName}'
-  `);
-    console.log(result);
+    try {
+      const result = await this.dataSource.query(`
+        SELECT column_name
+        FROM information_schema.columns
+        WHERE table_name = '${sectionName}'
+      `);
+      if (result.length === 0) {
+        throw new Error(`No columns found for ${sectionName}`);
+      }
 
-    return result.map((row) => row.column_name);
+      return result.map((row) => row.column_name);
+    } catch (error) {
+      console.error(error);
+      throw error;
+    }
   }
 
-  // Get specific data based on table and column name
   async getSubSectionData(
     sectionName: string,
     subSectionName: string,
   ): Promise<any[]> {
-    console.log(subSectionName, sectionName);
+    try {
+      console.log(subSectionName, sectionName);
 
-    const result = await this.dataSource.query(`
-        SELECT "Script", "${subSectionName}" FROM "${sectionName}"
-        `);
-    console.log(result);
+      const result = await this.dataSource.query(`
+          SELECT "Script", "${subSectionName}" FROM "${sectionName}"
+          `);
+      console.log(result);
 
-    return result;
+      if (result.length === 0) {
+        throw new Error(`No data found for ${subSectionName}`);
+      }
+
+      return result;
+    } catch (error) {
+      console.error(error);
+      throw error;
+    }
   }
 }
